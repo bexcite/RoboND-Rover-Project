@@ -20,6 +20,7 @@ import time
 # Import functions for perception and decision making
 from perception import perception_step
 from decision import decision_step
+from control import control_step
 from supporting_functions import update_rover, create_output_images
 # Initialize socketio server and Flask application
 # (learn more at: https://python-socketio.readthedocs.io/en/latest/)
@@ -40,7 +41,7 @@ class History():
     self.hist = []
     self.time_len = time_length
   def add(self, dt, vel, mode):
-    if dt > 1.0:
+    if dt > 1.0 or vel is None:
       return
     for h in self.hist:
       h["dt"] += dt
@@ -63,6 +64,8 @@ class History():
     for idx in range(len(self.hist)-1):
       if mode is not None:
         if self.hist[idx]["mode"] == mode and self.hist[idx+1]["mode"] == mode:
+          # print('vel = ', self.hist[idx]["vel"])
+          # print('ddt = ', (self.hist[idx]["dt"] - self.hist[idx+1]["dt"]))
           d += self.hist[idx]["vel"] * (self.hist[idx]["dt"] - self.hist[idx+1]["dt"])
         else:
           return 0.0, 1
@@ -124,7 +127,17 @@ class RoverState():
 
         self.stuck = False
 
-        
+        self.targetPos = None
+        self.targetYaw = None
+        self.dt = 0.0
+
+        self.s_cte_prev = 0.0
+        self.s_cte_sum = 0.0
+
+        self.t_cte_prev = 0.0
+        self.t_cte_sum = 0.0
+
+        self.initialize = False
 # Initialize our rover
 Rover = RoverState()
 
@@ -145,7 +158,15 @@ def telemetry(sid, data):
 
     dt = time.time() - prev_counter
     print("DT = ", dt, ", VEL = ", Rover.vel)
+    Rover.dt = dt
     prev_counter = time.time()
+
+    # Initialize first time
+    if not Rover.initialize:
+      Rover.initialize = True
+      # Send zeros for throttle, brake and steer and empty images
+      send_control((0, 0, 0), '', '')
+      return
 
     history.add(dt, Rover.vel, Rover.mode)
     # print("hist = ", history.hist)
@@ -174,6 +195,10 @@ def telemetry(sid, data):
 
 
             Rover = decision_step(Rover)
+
+
+            Rover = control_step(Rover)
+
 
             # Create output images to send to server
             out_image_string1, out_image_string2 = create_output_images(Rover)

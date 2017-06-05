@@ -9,6 +9,25 @@ def decision_step(Rover):
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
 
+    steer = np.mean(Rover.nav_angles * 180/np.pi)
+    dists = np.mean(Rover.nav_dists)
+    print('mean steer = ', steer)
+    print('mean dists = ', dists)
+
+
+    targetX = 93.3 # Rover.pos[0] + 10
+    targetY = 78.4 # Rover.pos[1] + 10
+
+    targetYaw = 90
+
+    # print('deltaYaw = ', deltaYaw)
+
+    Rover.targetYaw = targetYaw
+    Rover.targetPos = (targetX, targetY)
+
+    return Rover
+
+'''
     # Example:
     # Check if we have vision data to make decisions with
     if Rover.nav_angles is not None:
@@ -93,3 +112,4 @@ def decision_step(Rover):
         Rover.send_pickup = True
 
     return Rover
+'''

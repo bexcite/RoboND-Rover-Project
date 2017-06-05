@@ -248,8 +248,10 @@ def perception_step(Rover):
     Rover.rock_dists = dist_rock
     Rover.rock_angles = angles_rock
 
-    # print("x = ", x)
-    # print("y = ", y)
+    print("x = ", x)
+    print("y = ", y)
+    print("yaw = ", yaw)
+
     # print(">>> Samples pos = ", Rover.samples_pos)
     # print('len rock_dists_angles = ', len(Rover.rock_dists))
 
