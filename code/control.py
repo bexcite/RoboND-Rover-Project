@@ -70,6 +70,8 @@ def control_step(Rover):
       targetVel = Rover.max_vel
     elif targetDist > 7 + 3.5 * Rover.vel:
       targetVel = Rover.max_vel / 2.0
+    elif targetDist > 2:
+      targetVel = Rover.max_vel / 4.0
     else:
       targetVel = 0.0
       coeff = 1.0
@@ -79,7 +81,12 @@ def control_step(Rover):
 
 
 
-    Rover.throttle = coeff * np.clip(tP * t_cte + tD * tDpart + tI * Rover.t_cte_sum, -0.2, 0.2)
+    Rover.throttle = coeff * np.clip(tP * t_cte + tD * tDpart + tI * Rover.t_cte_sum, -0.4, 0.2)
+
+    if targetVel == 0.0 and s_cte < 3:
+      Rover.brake = Rover.brake_set
+    else:
+      Rover.brake = 0
 
 
     print('t_cte = ', t_cte)
