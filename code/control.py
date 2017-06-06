@@ -12,12 +12,12 @@ def send_stop(Rover):
 def control_step(Rover):
 
     # Make throttle, steer, brake
-    tP = 0.7
-    tD = 0.2
+    tP = 2.5
+    tD = 1.5
     tI = 0.0
 
-    sP = 0.1
-    sD = 0.07
+    sP = 0.2
+    sD = 0.12
     sI = 0.0
 
     if Rover.targetPos is None:
@@ -64,12 +64,23 @@ def control_step(Rover):
     print('thrott_coeff = ', coeff)
 
 
-    t_cte = np.sqrt((Rover.targetPos[0] - Rover.pos[0]) ** 2 + (Rover.targetPos[1] - Rover.pos[1]) ** 2)
-    t_cte = t_cte - 3
+    targetDist = np.sqrt((Rover.targetPos[0] - Rover.pos[0]) ** 2 + (Rover.targetPos[1] - Rover.pos[1]) ** 2)
+    targetVel = 0
+    if targetDist > 15 + 2.5 * Rover.vel:
+      targetVel = Rover.max_vel
+    elif targetDist > 7 + 3.5 * Rover.vel:
+      targetVel = Rover.max_vel / 2.0
+    else:
+      targetVel = 0.0
+      coeff = 1.0
+    t_cte = targetVel - Rover.vel
     tDpart = (t_cte - Rover.t_cte_prev) / Rover.dt
     Rover.t_cte_sum += t_cte * Rover.dt
 
+
+
     Rover.throttle = coeff * np.clip(tP * t_cte + tD * tDpart + tI * Rover.t_cte_sum, -0.2, 0.2)
+
 
     print('t_cte = ', t_cte)
     print('tDpart = ', tDpart)
