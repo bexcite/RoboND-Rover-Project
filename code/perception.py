@@ -247,10 +247,26 @@ def perception_step(Rover):
     dist_rock, angles_rock = to_polar_coords(xpix_diam, ypix_diam)
     Rover.rock_dists = dist_rock
     Rover.rock_angles = angles_rock
+    if len(Rover.rock_dists) > 0:
+      d = np.mean(Rover.rock_dists)
+      a = np.mean(Rover.rock_angles)
+      rx = d * np.cos(a)
+      ry = d * np.sin(a)
+      rx_w, ry_w = pix_to_world(rx, ry, x, y, yaw, 200, 10)
+      Rover.rock_pos = (rx_w, ry_w)
+    else:
+      Rover.rock_pos = None
 
-    print("x = ", x)
-    print("y = ", y)
-    print("yaw = ", yaw)
+    print('rock_pos = ', Rover.rock_pos)
+
+    print("x = ", x, ", y =", y, ", yaw = ", yaw)
+
+    print('rock map nearby = ', Rover.worldmap[y-5:y+5, x-5:x+5, 1])
+
+    # Clean picked up rock from the map
+    if Rover.picking_up:
+      Rover.worldmap[y-5:y+5, x-5:x+5, 1] = 0
+
 
     # print(">>> Samples pos = ", Rover.samples_pos)
     # print('len rock_dists_angles = ', len(Rover.rock_dists))

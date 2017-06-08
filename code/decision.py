@@ -15,8 +15,40 @@ def decision_step(Rover):
     print('mean dists = ', dists)
 
 
-    targetX = 93.3 # Rover.pos[0] + 10
-    targetY = 78.4 # Rover.pos[1] + 10
+    if Rover.rock_pos is not None:
+      Rover.targetPos = Rover.rock_pos
+      Rover.mode = 'forward_stop'
+      return Rover
+
+    '''
+    # Look at map and select the best way point
+    # 1. Is there diamonds on map?
+    print('Look for rocks')
+    ypos, xpos = Rover.worldmap[:, :, 1].nonzero()
+    if len(ypos) > 0:
+      print('ROCKS!!!! Num pix = ', len(ypos))
+      print('ypos =', ypos)
+      print('xpos =', xpos)
+      Rover.targetPos = (xpos[0], ypos[0])
+      Rover.mode = 'forward_stop'
+      return Rover
+    else:
+      print('NO ROCKS')
+    '''
+
+
+    # Plan the route and select the next point
+
+
+    # targetX = 93.3 # Rover.pos[0] + 10
+    # targetY = 78.4 # Rover.pos[1] + 10
+
+    targetX = 97
+    targetY = 73
+
+
+    # targetX = np.random.choice([107, 106])
+    # targetY = 66
 
     targetYaw = 90
 
@@ -24,6 +56,9 @@ def decision_step(Rover):
 
     Rover.targetYaw = targetYaw
     Rover.targetPos = (targetX, targetY)
+    # Rover.mode = 'forward_stop'
+    Rover.mode = 'forward_stop'
+    # Rover.mode = 'forward_pickup'
 
     return Rover
 

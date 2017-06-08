@@ -119,8 +119,9 @@ class RoverState():
 
         self.view_mask = None
         self.nav_mask = None
-        self.rock_angles = None
-        self.rock_dists = None
+        self.rock_angles = []
+        self.rock_dists = []
+        self.rock_pos = []
 
         self.histAvgSpeed = 0.0
         self.histAvgSpeedErr = 1
