@@ -24,7 +24,7 @@ def get_target_vel(Rover):
             targetVel = Rover.max_vel
         elif targetDist > 7 + 3.5 * Rover.vel:
             targetVel = Rover.max_vel / 2.0
-        elif targetDist > 1:
+        elif targetDist > 1.5:
             targetVel = Rover.max_vel / 4.0
         else:
             targetVel = 0.0
@@ -70,16 +70,23 @@ def control_step(Rover):
     deltaYaw = targetYaw - Rover.yaw
 
 
-    if Rover.rock_pos is not None:
+    if len(Rover.rock_angles) > 30:
       # targetYaw = np.mean(Rover.rock_angles * 180 / np.pi) + Rover.yaw
       deltaYaw = np.mean(Rover.rock_angles * 180 / np.pi)
       print('targetYaw to rock = ', deltaYaw + Rover.yaw)
       print('deltaYaw to rock = ', deltaYaw)
 
+
+    # Smooth with prev
+    deltaYaw = deltaYaw * 0.1 + Rover.prev_delta_yaw * 0.9
+    Rover.prev_delta_yaw = deltaYaw
+
     while deltaYaw > 180.0:
       deltaYaw -= 360.0
     while deltaYaw < - 180:
       deltaYaw += 360
+
+    print('deltaYaw = ', deltaYaw)
 
     targetSteer = deltaYaw
 
@@ -131,13 +138,13 @@ def control_step(Rover):
 
     Rover.throttle = coeff * np.clip(tP * t_cte + tD * tDpart + tI * Rover.t_cte_sum, -0.4, 0.2)
 
-    '''
+
     if targetVel == 0.0 and s_cte < 3: #  and Rover.vel > 0.1
       Rover.brake = Rover.brake_set
       print("BRAKE!!!!!!!!")
     else:
       Rover.brake = 0
-    '''
+
 
 
     print('t_cte = ', t_cte)

@@ -1,5 +1,6 @@
 import numpy as np
 
+from scipy.ndimage.measurements import label
 
 # This is where you can build a decision tree for determining throttle, brake and steer
 # commands based on the output of the perception_step() function
@@ -9,14 +10,64 @@ def decision_step(Rover):
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
 
-    steer = np.mean(Rover.nav_angles * 180/np.pi)
-    dists = np.mean(Rover.nav_dists)
-    print('mean steer = ', steer)
-    print('mean dists = ', dists)
+    # steer = np.mean(Rover.nav_angles * 180/np.pi)
+    # dists = np.mean(Rover.nav_dists)
+    # print('mean steer = ', steer)
+    # print('mean dists = ', dists)
+
+    # TODO: Implement clean up by label
+    # Clean picked up rock from the map
+    if Rover.picking_up:
+      # Get Closest rock in dist < 4
+      # Clean all pixels from the map for this rock
+      # Rover.worldmap[y-5:y+5, x-5:x+5, 1] = 0
+      return Rover
 
 
-    if Rover.rock_pos is not None:
+    if len(Rover.rock_angles) > 30:
+      print('ROCK VISIBLE! set targetPos to ', Rover.rock_pos)
       Rover.targetPos = Rover.rock_pos
+      Rover.mode = 'forward_stop'
+      return Rover
+
+
+
+    # TODO: Extract method here
+    # Label map with rocks
+    rocks_map = Rover.worldmap[:, :, 1]
+    labels = label(rocks_map)
+    print('labels[num] = ', labels[1])
+
+
+    rocks = []
+    positions = []
+    for rock in range(1, labels[1] + 1):
+      ypos, xpos = (labels[0] == rock).nonzero()
+      rock_pxs = rocks_map[ypos,xpos]
+      # print("rock_pxs = ", rock_pxs)
+      rock_pxs /= np.max(rock_pxs)
+      xpos_m = np.sum(np.multiply(xpos, rock_pxs))/np.sum(rock_pxs)
+      ypos_m = np.sum(np.multiply(ypos, rock_pxs))/np.sum(rock_pxs)
+      # print('ypos = ', ypos)
+      # print('xpos = ', xpos)
+      # print('xpos_m = ', xpos_m)
+      # print('ypos_m = ', ypos_m)
+      # print("rock_pxs_norm = ", rock_pxs)
+      rocks.append((xpos_m, ypos_m))
+      positions.append((xpos, ypos))
+
+    # TODO: Select closes rock as target
+    if len(rocks) > 0:
+      dist_min = 200
+      idx_min = 0
+      for idx, r in enumerate(rocks):
+        d = np.sqrt((Rover.pos[0] - r[0]) ** 2 + (Rover.pos[1] - r[1]) ** 2)
+        if d < dist_min:
+          dist_min = d
+          idx_min = idx
+        print(idx, ' : ', r)
+      print('ROCK ON MAP! set targetPos to ', rocks[idx_min])
+      Rover.targetPos = rocks[idx_min]
       Rover.mode = 'forward_stop'
       return Rover
 

@@ -157,7 +157,8 @@ def perception_step(Rover):
     # view_horizon = 70
     thresh_floor = (110, 110, 110)
     thresh_wall = (80, 80, 80)
-    thresh_diamond = ((86,255), (0,255), (0,42)) # ((86,255), (0,255), (0,62))
+    thresh_diamond = ((0,30), (120,255), (120,255)) # HSV
+    # thresh_diamond = ((86,255), (0,255), (0,42)) # ((86,255), (0,255), (0,62))
 
 
     image = Rover.img
@@ -191,13 +192,15 @@ def perception_step(Rover):
     obs_warped = perspect_transform(obs_threshed, source, destination)
     obs_masked = np.multiply(obs_warped, Rover.view_mask)
 
-    diam_clipped = clip_to_view_horizon(image, 75)
+    # diam_clipped = np.copy(image) # clip_to_view_horizon(image, 80)
+    diam_clipped = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     diam_color_select = np.zeros_like(diam_clipped[:,:,0])
     diam_thresh = (diam_clipped[:,:,0] > thresh_diamond[0][0]) & (diam_clipped[:,:,0] < thresh_diamond[0][1]) \
                 & (diam_clipped[:,:,1] > thresh_diamond[1][0]) & (diam_clipped[:,:,1] < thresh_diamond[1][1]) \
                 & (diam_clipped[:,:,2] > thresh_diamond[2][0]) & (diam_clipped[:,:,2] < thresh_diamond[2][1])
     diam_color_select[diam_thresh] = 1
     diam_warped = perspect_transform(diam_color_select, source, destination)
+    # diam_warped = np.copy(diam_color_select)
 
 
 
@@ -254,18 +257,23 @@ def perception_step(Rover):
       ry = d * np.sin(a)
       rx_w, ry_w = pix_to_world(rx, ry, x, y, yaw, 200, 10)
       Rover.rock_pos = (rx_w, ry_w)
+      Rover.rock_ttl = 5
+    elif Rover.rock_ttl > 0:
+      Rover.rock_ttl -= 1
     else:
       Rover.rock_pos = None
+      Rover.rock_dists = []
+      Rover.rock_angles = []
 
     print('rock_pos = ', Rover.rock_pos)
+    print('len(rock_angles) = ', len(Rover.rock_angles))
+    print('rock_ttl = ', Rover.rock_ttl)
 
     print("x = ", x, ", y =", y, ", yaw = ", yaw)
 
-    print('rock map nearby = ', Rover.worldmap[y-5:y+5, x-5:x+5, 1])
+    # print('rock map nearby = ', Rover.worldmap[y-5:y+5, x-5:x+5, 1])
 
-    # Clean picked up rock from the map
-    if Rover.picking_up:
-      Rover.worldmap[y-5:y+5, x-5:x+5, 1] = 0
+
 
 
     # print(">>> Samples pos = ", Rover.samples_pos)

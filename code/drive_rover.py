@@ -119,9 +119,11 @@ class RoverState():
 
         self.view_mask = None
         self.nav_mask = None
+
         self.rock_angles = []
         self.rock_dists = []
         self.rock_pos = []
+        self.rock_ttl = 0
 
         self.histAvgSpeed = 0.0
         self.histAvgSpeedErr = 1
@@ -131,6 +133,8 @@ class RoverState():
         self.targetPos = None
         self.targetYaw = None
         self.dt = 0.0
+
+        self.prev_delta_yaw = 0
 
         self.s_cte_prev = 0.0
         self.s_cte_sum = 0.0
@@ -192,7 +196,8 @@ def telemetry(sid, data):
         if np.isfinite(Rover.vel):
 
             # Execute the perception and decision steps to update the Rover's state
-            Rover = perception_step(Rover)
+            if np.absolute(Rover.pitch) < 0.2 and np.absolute(Rover.roll) < 0.2:
+              Rover = perception_step(Rover)
 
 
             Rover = decision_step(Rover)
