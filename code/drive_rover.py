@@ -21,6 +21,7 @@ import time
 from perception import perception_step
 from decision import decision_step
 from control import control_step
+from planning import planning_step
 from supporting_functions import update_rover, create_output_images
 # Initialize socketio server and Flask application
 # (learn more at: https://python-socketio.readthedocs.io/en/latest/)
@@ -134,7 +135,11 @@ class RoverState():
         self.targetYaw = None
         self.dt = 0.0
 
-        self.prev_delta_yaw = 0
+        # Rotate mode
+        self.rotStartYaw = 0.0
+        self.rotStartTime = 0.0
+
+        self.prev_target_yaw = 0
 
         self.s_cte_prev = 0.0
         self.s_cte_sum = 0.0
@@ -196,11 +201,13 @@ def telemetry(sid, data):
         if np.isfinite(Rover.vel):
 
             # Execute the perception and decision steps to update the Rover's state
-            if np.absolute(Rover.pitch) < 0.2 and np.absolute(Rover.roll) < 0.2:
+            if np.absolute(Rover.pitch) < 2.0 and np.absolute(Rover.roll) < 2.0:
               Rover = perception_step(Rover)
 
 
             Rover = decision_step(Rover)
+
+            Rover = planning_step(Rover)
 
 
             Rover = control_step(Rover)

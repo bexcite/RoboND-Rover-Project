@@ -248,16 +248,17 @@ def perception_step(Rover):
     Rover.nav_angles = angles_nav
 
     dist_rock, angles_rock = to_polar_coords(xpix_diam, ypix_diam)
-    Rover.rock_dists = dist_rock
-    Rover.rock_angles = angles_rock
-    if len(Rover.rock_dists) > 0:
-      d = np.mean(Rover.rock_dists)
-      a = np.mean(Rover.rock_angles)
+
+    if len(dist_rock) > 0:
+      d = np.min(dist_rock)
+      a = np.mean(angles_rock)
       rx = d * np.cos(a)
       ry = d * np.sin(a)
       rx_w, ry_w = pix_to_world(rx, ry, x, y, yaw, 200, 10)
       Rover.rock_pos = (rx_w, ry_w)
-      Rover.rock_ttl = 5
+      Rover.rock_dists = dist_rock
+      Rover.rock_angles = angles_rock
+      Rover.rock_ttl = 30
     elif Rover.rock_ttl > 0:
       Rover.rock_ttl -= 1
     else:
