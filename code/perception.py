@@ -156,7 +156,7 @@ def perception_step(Rover):
 
     # view_horizon = 70
     thresh_floor = (110, 110, 110)
-    thresh_wall = (80, 80, 80)
+    thresh_wall = ((0,90), (0, 255), (0, 140))  # (80, 80, 80)
     thresh_diamond = ((0,30), (120,255), (120,255)) # HSV
     # thresh_diamond = ((86,255), (0,255), (0,42)) # ((86,255), (0,255), (0,62))
 
@@ -188,8 +188,12 @@ def perception_step(Rover):
     floor_warped = perspect_transform(floor_threshed, source, destination)
     floor_masked = np.multiply(floor_warped, Rover.nav_mask)
 
-    obs_threshed = color_thresh_inv(image, thresh_wall)
-    obs_warped = perspect_transform(obs_threshed, source, destination)
+    obs_color_select = np.zeros_like(image[:,:,0])
+    obs_thresh = (image[:,:,0] > thresh_wall[0][0]) & (image[:,:,0] < thresh_wall[0][1]) \
+                & (image[:,:,1] > thresh_wall[1][0]) & (image[:,:,1] < thresh_wall[1][1]) \
+                & (image[:,:,2] > thresh_wall[2][0]) & (image[:,:,2] < thresh_wall[2][1])
+    obs_color_select[obs_thresh] = 1
+    obs_warped = perspect_transform(obs_color_select, source, destination)
     obs_masked = np.multiply(obs_warped, Rover.view_mask)
 
     # diam_clipped = np.copy(image) # clip_to_view_horizon(image, 80)
@@ -234,9 +238,14 @@ def perception_step(Rover):
         #          Rover.worldmap[rock_y_world, rock_x_world, 1] += 1
         #          Rover.worldmap[navigable_y_world, navigable_x_world, 2] += 1
 
-    add_to_map(Rover.worldmap, 2, xpix_nav_world, ypix_nav_world, 1)
-    add_to_map(Rover.worldmap, 0, xpix_obs_world, ypix_obs_world, 1)
-    add_to_map(Rover.worldmap, 1, xpix_diam_world, ypix_diam_world, 1)
+    # Add to map if only pitch and roll is less than 2.0
+    if np.absolute(Rover.pitch) < 2.0 and np.absolute(Rover.roll) < 2.0:
+      add_to_map(Rover.worldmap, 2, xpix_nav_world, ypix_nav_world, 1)
+      add_to_map(Rover.worldmap, 0, xpix_obs_world, ypix_obs_world, 1)
+      add_to_map(Rover.worldmap, 1, xpix_diam_world, ypix_diam_world, 1)
+
+    # Add current Rover pos as navigable
+    add_to_map(Rover.worldmap, 2, [int(Rover.pos[0])], [int(Rover.pos[1])], 1)
 
     # 8) Convert rover-centric pixel positions to polar coordinates
     # Update Rover pixel distances and angles

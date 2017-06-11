@@ -1,15 +1,7 @@
 import numpy as np
 import math
+from robo_functions import *
 
-def distance(pos1, pos2):
-  return np.sqrt((pos2[0] - pos1[0]) ** 2 + (pos2[1] - pos2[1]) ** 2)
-
-def normalize_angle(a):
-  while a > 180.0:
-    a -= 360.0
-  while a < - 180:
-    a += 360
-  return a
 
 def send_stop(Rover):
     Rover.throttle = 0
@@ -87,13 +79,16 @@ def control_step(Rover):
     targetYaw = targetYaw * 180 / math.pi
     print('targetYaw in = ', targetYaw)
 
-    if len(Rover.rock_angles) > 10:
+    if len(Rover.rock_angles) > 10 and Rover.mode == 'forward_stop':
       # targetYaw = np.mean(Rover.rock_angles * 180 / np.pi) + Rover.yaw
       deltaYaw = np.mean(Rover.rock_angles * 180 / np.pi)
       targetYaw = normalize_angle(deltaYaw + Rover.yaw)
       print('targetYaw to rock = ', deltaYaw + Rover.yaw)
       # print('deltaYaw to rock = ', deltaYaw)
-
+    elif len(Rover.nav_angles) > 10 and Rover.mode == 'forward':
+      deltaYaw = np.mean(Rover.nav_angles * 180 / np.pi)
+      targetYaw = normalize_angle(deltaYaw + Rover.yaw)
+      print('targetYaw to nav space = ', deltaYaw + Rover.yaw)
 
     # Smooth with prev
     targetYaw = normalize_angle(targetYaw * 0.1 + Rover.prev_target_yaw * 0.9)
@@ -140,9 +135,12 @@ def control_step(Rover):
 
     # ====== Throttle control
 
-    k = 3
-    if distance(Rover.pos, Rover.targetPos) < 3:
-      k = 0.5
+    k = 10
+
+    if Rover.mode == 'forward_stop':
+      k = 3
+      if distance(Rover.pos, Rover.targetPos) < 3:
+        k = 0.5
 
     coeff = np.exp(-(s_cte**2/(2*k*k)))
     print('thrott_coeff = ', coeff)
@@ -172,6 +170,7 @@ def control_step(Rover):
     if targetVel == 0.0:
       coeff = 1.0
 
+    print('coeff final = ', coeff)
     Rover.throttle = coeff * np.clip(tP * t_cte + tD * tDpart + tI * Rover.t_cte_sum, -0.4, 0.2)
 
 
@@ -192,7 +191,7 @@ def control_step(Rover):
 
     # this prevents rover to stale on one place, I think it's due to very small number of throttle
     # and the way simulator process it.
-    if Rover.throttle < 0.1 and Rover.throttle > -0.1:
+    if Rover.throttle < 0.01 and Rover.throttle > -0.01:
       Rover.throttle = 0.0
 
     print('THROTTLE = ', Rover.throttle)

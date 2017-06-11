@@ -107,6 +107,13 @@ def create_output_images(Rover):
                         map_add[test_rock_y-rock_size:test_rock_y+rock_size,
                         test_rock_x-rock_size:test_rock_x+rock_size, :] = 255
 
+      # Add on map target destinations
+      if Rover.targetPos is not None:
+        target_size = 2
+        map_add[Rover.targetPos[1]-target_size:Rover.targetPos[1]+target_size,
+        Rover.targetPos[0]-target_size:Rover.targetPos[0]+target_size] = (150, 150, 255)
+
+
       # Calculate some statistics on the map results
       # First get the total number of pixels in the navigable terrain map
       tot_nav_pix = np.float(len((plotmap[:,:,2].nonzero()[0])))

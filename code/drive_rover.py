@@ -93,7 +93,7 @@ class RoverState():
         self.nav_angles = None # Angles of navigable terrain pixels
         self.nav_dists = None # Distances of navigable terrain pixels
         self.ground_truth = ground_truth_3d # Ground truth worldmap
-        self.mode = 'forward' # Current mode (can be forward or stop)
+        self.mode = 'start' # Current mode (can be forward or stop)
         self.throttle_set = 0.2 # Throttle setting when accelerating
         self.brake_set = 10 # Brake setting when braking
         # The stop_forward and go_forward fields below represent total count
@@ -201,8 +201,8 @@ def telemetry(sid, data):
         if np.isfinite(Rover.vel):
 
             # Execute the perception and decision steps to update the Rover's state
-            if np.absolute(Rover.pitch) < 2.0 and np.absolute(Rover.roll) < 2.0:
-              Rover = perception_step(Rover)
+
+            Rover = perception_step(Rover)
 
 
             Rover = decision_step(Rover)

@@ -1,7 +1,16 @@
 import numpy as np
 import time
+import queue
+from robo_functions import *
 
 from scipy.ndimage.measurements import label
+
+# def distance(pos1, pos2):
+#   return np.sqrt((pos2[0] - pos1[0]) ** 2 + (pos2[1] - pos2[1]) ** 2)
+
+# def pos_int(pos):
+#   return (int(pos[0]), int(pos[1]))
+
 
 def get_rocks_on_map(worldmap):
     rocks_map = worldmap[:, :, 1]
@@ -38,6 +47,77 @@ def get_closest_rock_idx(rocks, rover_pos, limit = 200):
       idx_min = idx
     print(idx, ' : ', r)
   return idx_min
+
+def get_map_neighbors(worldmap, current):
+  neighbors = []
+  obs_map = worldmap[:, :, 0] # get obstacles map
+  if current[0] - 1 >= 0:
+    p = (current[0] - 1, current[1])
+    if obs_map[p[1], p[0]] == 0:
+      neighbors.append(p)
+  if current[0] + 1 < 200:
+    p = (current[0] + 1, current[1])
+    if obs_map[p[1], p[0]] == 0:
+      neighbors.append(p)
+  if current[1] - 1 >= 0:
+    p = (current[0], current[1] - 1)
+    if obs_map[p[1], p[0]] == 0:
+      neighbors.append(p)
+  if current[1] + 1 < 200:
+    p = (current[0], current[1] + 1)
+    if obs_map[p[1], p[0]] == 0:
+      neighbors.append(p)
+  return neighbors
+
+def get_next_cell_to_explore(Rover):
+    start_pos = pos_int(Rover.pos)
+    nav_map = Rover.worldmap[start_pos[1]-6:start_pos[1]+6, start_pos[0]-6:start_pos[0]+6, 2]
+    obs_map = Rover.worldmap[start_pos[1]-6:start_pos[1]+6, start_pos[0]-6:start_pos[0]+6, 0]
+    print('nav_map = ')
+    print(nav_map)
+    print('obs_map = ')
+    print(obs_map)
+    frontier = queue.PriorityQueue()
+    frontier.put((0, start_pos))
+    came_from = {}
+    came_from[start_pos] = None
+
+    stime = time.time()
+
+    print('start_pos =', start_pos)
+
+    while not frontier.empty():
+      current = frontier.get()
+
+      print('current = ', current)
+
+      current = current[1]
+
+      # Check
+      if current != start_pos:
+        px_value = Rover.worldmap[current[1], current[0]]
+        if px_value[2] == 0 and px_value[0] == 0:
+          # Visit this
+          print('selected dist = ', distance(Rover.pos, current))
+          print('time = ', time.time() - stime)
+          return current
+          # Rover.targetPos = current
+          # Rover.mode = 'forward'
+          # print('time = ', time.time() - stime)
+          # return Rover
+
+
+      neighbors = get_map_neighbors(Rover.worldmap, current)
+      print('neighbors = ', neighbors)
+      for next in neighbors:
+        print('dist to next ', next, ' = ', distance(Rover.pos, next))
+        if next not in came_from and distance(Rover.pos, next) > 1:
+          priority = direction_to_pos(Rover.pos, Rover.yaw, next)
+          frontier.put((np.absolute(priority), next))
+          came_from[next] = current
+      # print('came_from = ', came_from)
+      # print('frontier = ', frontier)
+    return None
 
 
 # This is where you can build a decision tree for determining throttle, brake and steer
@@ -84,10 +164,81 @@ def decision_step(Rover):
       Rover.mode = 'forward_stop'
       return Rover
 
+    # Find the next target pos to explore
+    print('dec targetPos =', Rover.targetPos)
+    print('dec Rover.pos =', Rover.pos)
+    print('dec Rover.mode = ', Rover.mode)
+    if (Rover.mode == 'no_target'
+          or (Rover.mode == 'forward' and distance(Rover.pos, Rover.targetPos) < 1)):
+      next = get_next_cell_to_explore(Rover)
+      if next is not None:
+        Rover.targetPos = next
+        Rover.mode = 'forward'
+        return Rover
+      '''
+      start_pos = pos_int(Rover.pos)
+      nav_map = Rover.worldmap[start_pos[1]-6:start_pos[1]+6, start_pos[0]-6:start_pos[0]+6, 2]
+      obs_map = Rover.worldmap[start_pos[1]-6:start_pos[1]+6, start_pos[0]-6:start_pos[0]+6, 0]
+      print('nav_map = ')
+      print(nav_map)
+      print('obs_map = ')
+      print(obs_map)
+      frontier = queue.PriorityQueue()
+      frontier.put((0, start_pos))
+      came_from = {}
+      came_from[start_pos] = None
+
+      stime = time.time()
+
+      print('start_pos =', start_pos)
+
+      while not frontier.empty():
+        current = frontier.get()
+
+        print('current = ', current)
+
+        current = current[1]
+
+        # Check
+        if current != start_pos:
+          px_value = Rover.worldmap[current[1], current[0]]
+          if px_value[2] == 0:
+            # Visit this
+            print('selected dist = ', distance(Rover.pos, current))
+            Rover.targetPos = current
+            Rover.mode = 'forward'
+            print('time = ', time.time() - stime)
+            return Rover
+
+
+        neighbors = get_map_neighbors(Rover.worldmap, current)
+        print('neighbors = ', neighbors)
+        for next in neighbors:
+          print('dist to next ', next, ' = ', distance(Rover.pos, next))
+          if next not in came_from and distance(Rover.pos, next) > 1:
+            priority = direction_to_pos(Rover.pos, Rover.yaw, next)
+            frontier.put((np.absolute(priority), next))
+            came_from[next] = current
+        # print('came_from = ', came_from)
+        # print('frontier = ', frontier)
+      '''
+
+
+    # Check is targetPos is alreadt explored
+    if Rover.mode == 'forward':
+      if Rover.targetPos is not None:
+        px_value = Rover.worldmap[Rover.targetPos[1], Rover.targetPos[0]]
+        if px_value[2] != 0 or px_value[0] != 0:
+          next = get_next_cell_to_explore(Rover)
+          if next is not None:
+            Rover.targetPos = next
+            Rover.mode = 'forward'
+            return Rover
+
     # Do nothing and just explore
     print('MODE before rotate check = ', Rover.mode)
-    Rover.targetPos = None
-    if Rover.mode != 'rotate' and Rover.mode != 'no_target':
+    if Rover.mode != 'rotate' and Rover.mode != 'no_target' and Rover.mode != 'forward':
+      Rover.targetPos = None
       Rover.mode = 'rotate'
       print("MODE = rotate")
       Rover.rotStartYaw = Rover.yaw
@@ -98,7 +249,7 @@ def decision_step(Rover):
       print("MODE = rotate cont")
       print('delta_t = ', delta_t)
       print('delta_yaw = ', delta_yaw)
-      if delta_t > 1.0 and delta_yaw < 10:
+      if delta_t > 4.0 and delta_yaw < 10:
         # We did about full lap then stop
         Rover.mode = 'no_target'
         print("MODE = no_target")
