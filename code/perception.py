@@ -157,7 +157,7 @@ def perception_step(Rover):
     # view_horizon = 70
     thresh_floor = (110, 110, 110)
     thresh_wall = ((0,90), (0, 255), (0, 140))  # (80, 80, 80)
-    thresh_diamond = ((0,30), (120,255), (120,255)) # HSV
+    thresh_diamond = ((0,40), (120,255), (120,255)) # HSV ((0,30), (120,255), (120,255))
     # thresh_diamond = ((86,255), (0,255), (0,42)) # ((86,255), (0,255), (0,62))
 
 
@@ -277,6 +277,8 @@ def perception_step(Rover):
 
     print('rock_pos = ', Rover.rock_pos)
     print('len(rock_angles) = ', len(Rover.rock_angles))
+    print('len(nav_angles) = ', len(Rover.nav_angles))
+    print('mean(nav_dists) = ', np.mean(Rover.nav_dists))
     print('rock_ttl = ', Rover.rock_ttl)
 
     print("x = ", x, ", y =", y, ", yaw = ", yaw)

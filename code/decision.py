@@ -133,6 +133,9 @@ def decision_step(Rover):
     # print('mean steer = ', steer)
     # print('mean dists = ', dists)
 
+    if Rover.mode == 'rotate':
+      return Rover
+
     rocks, positions = get_rocks_on_map(Rover.worldmap)
 
     # Clean picked up rock from the map
@@ -147,6 +150,12 @@ def decision_step(Rover):
       return Rover
 
 
+    # if stuck
+    if Rover.histAvgSpeed < 0.01 and Rover.histAvgSpeedErr == 0:
+      Rover.mode = 'rotate_left'
+      print('ROTATE LEFT! you are stuck')
+      return Rover
+
     if len(Rover.rock_angles) > 10:
       print('ROCK VISIBLE! set targetPos to ', Rover.rock_pos)
       Rover.targetPos = Rover.rock_pos
@@ -157,13 +166,25 @@ def decision_step(Rover):
 
 
     # TODO: Select closest rock as target
+    '''
     if len(rocks) > 0:
       idx_min = get_closest_rock_idx(rocks, Rover.pos)
       print('ROCK ON MAP! set targetPos to ', rocks[idx_min])
       Rover.targetPos = rocks[idx_min]
       Rover.mode = 'forward_stop'
       return Rover
+    '''
 
+
+    if len(Rover.nav_angles) < 200:
+      Rover.mode = 'rotate_left'
+      return Rover
+
+
+
+    Rover.mode = 'follow_wall'
+
+    '''
     # Find the next target pos to explore
     print('dec targetPos =', Rover.targetPos)
     print('dec Rover.pos =', Rover.pos)
@@ -175,53 +196,6 @@ def decision_step(Rover):
         Rover.targetPos = next
         Rover.mode = 'forward'
         return Rover
-      '''
-      start_pos = pos_int(Rover.pos)
-      nav_map = Rover.worldmap[start_pos[1]-6:start_pos[1]+6, start_pos[0]-6:start_pos[0]+6, 2]
-      obs_map = Rover.worldmap[start_pos[1]-6:start_pos[1]+6, start_pos[0]-6:start_pos[0]+6, 0]
-      print('nav_map = ')
-      print(nav_map)
-      print('obs_map = ')
-      print(obs_map)
-      frontier = queue.PriorityQueue()
-      frontier.put((0, start_pos))
-      came_from = {}
-      came_from[start_pos] = None
-
-      stime = time.time()
-
-      print('start_pos =', start_pos)
-
-      while not frontier.empty():
-        current = frontier.get()
-
-        print('current = ', current)
-
-        current = current[1]
-
-        # Check
-        if current != start_pos:
-          px_value = Rover.worldmap[current[1], current[0]]
-          if px_value[2] == 0:
-            # Visit this
-            print('selected dist = ', distance(Rover.pos, current))
-            Rover.targetPos = current
-            Rover.mode = 'forward'
-            print('time = ', time.time() - stime)
-            return Rover
-
-
-        neighbors = get_map_neighbors(Rover.worldmap, current)
-        print('neighbors = ', neighbors)
-        for next in neighbors:
-          print('dist to next ', next, ' = ', distance(Rover.pos, next))
-          if next not in came_from and distance(Rover.pos, next) > 1:
-            priority = direction_to_pos(Rover.pos, Rover.yaw, next)
-            frontier.put((np.absolute(priority), next))
-            came_from[next] = current
-        # print('came_from = ', came_from)
-        # print('frontier = ', frontier)
-      '''
 
 
     # Check is targetPos is alreadt explored
@@ -243,17 +217,18 @@ def decision_step(Rover):
       print("MODE = rotate")
       Rover.rotStartYaw = Rover.yaw
       Rover.rotStartTime = time.time()
-    elif Rover.mode == 'rotate':
-      delta_t = time.time() - Rover.rotStartTime
-      delta_yaw = np.absolute(Rover.yaw - Rover.rotStartYaw)
-      print("MODE = rotate cont")
-      print('delta_t = ', delta_t)
-      print('delta_yaw = ', delta_yaw)
-      if delta_t > 4.0 and delta_yaw < 10:
-        # We did about full lap then stop
-        Rover.mode = 'no_target'
-        print("MODE = no_target")
-
+      return Rover
+    # elif Rover.mode == 'rotate':
+    #   delta_t = time.time() - Rover.rotStartTime
+    #   delta_yaw = np.absolute(Rover.yaw - Rover.rotStartYaw)
+    #   print("MODE = rotate cont")
+    #   print('delta_t = ', delta_t)
+    #   print('delta_yaw = ', delta_yaw)
+    #   if delta_t > 4.0 and delta_yaw < 10:
+    #     # We did about full lap then stop
+    #     Rover.mode = 'no_target'
+    #     print("MODE = no_target")
+    '''
 
 
 

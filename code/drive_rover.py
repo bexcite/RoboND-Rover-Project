@@ -41,14 +41,14 @@ class History():
   def __init__(self, time_length = 2.0):
     self.hist = []
     self.time_len = time_length
-  def add(self, dt, vel, mode):
+  def add(self, dt, vel, throttle, mode):
     if dt > 1.0 or vel is None:
       return
     for h in self.hist:
       h["dt"] += dt
     while (len(self.hist) > 0 and self.hist[0]["dt"] > self.time_len ):
       del self.hist[0]
-    self.hist.append({"dt":dt, "vel":vel, "mode":mode})
+    self.hist.append({"dt":dt, "vel":vel, "throttle":throttle, "mode":mode})
   def avgSpeed(self, mode=None):
     if len(self.hist) == 0: return 0.0, 1
     if len(self.hist) > 0 and self.hist[0]["dt"] < self.time_len/2:
@@ -62,6 +62,7 @@ class History():
     #   else:
     #     return self.hist[0]["vel"], 0
     d = 0.0
+    t = 0.0
     for idx in range(len(self.hist)-1):
       if mode is not None:
         if self.hist[idx]["mode"] == mode and self.hist[idx+1]["mode"] == mode:
@@ -72,8 +73,12 @@ class History():
           return 0.0, 1
       else:
         d += self.hist[idx]["vel"] * (self.hist[idx]["dt"] - self.hist[idx+1]["dt"])
+      t += self.hist[idx]["throttle"]
     print('d = ', d)
-    return d / (self.hist[0]["dt"] - self.hist[len(self.hist)-1]["dt"]), 0
+    if t / len(self.hist) > 0.1:
+      return d / (self.hist[0]["dt"] - self.hist[len(self.hist)-1]["dt"]), 0
+    else:
+      return d / (self.hist[0]["dt"] - self.hist[len(self.hist)-1]["dt"]), 1
 history = History(2.0)
 
 # Define RoverState() class to retain rover state parameters
@@ -178,9 +183,9 @@ def telemetry(sid, data):
       send_control((0, 0, 0), '', '')
       return
 
-    history.add(dt, Rover.vel, Rover.mode)
+
     # print("hist = ", history.hist)
-    avSpeed, avS_err = history.avgSpeed(mode='forward')
+    avSpeed, avS_err = history.avgSpeed() # mode='forward'
     print("avgSpeed = ", avSpeed, ", err = ", avS_err)
     Rover.histAvgSpeed = avSpeed
     Rover.histAvgSpeedErr = avS_err
@@ -211,6 +216,9 @@ def telemetry(sid, data):
 
 
             Rover = control_step(Rover)
+
+
+            history.add(dt, Rover.vel, Rover.throttle, Rover.mode)
 
 
             # Create output images to send to server
