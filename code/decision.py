@@ -150,9 +150,9 @@ def decision_step(Rover):
       return Rover
 
 
-    # if stuck
+    # if we stuck
     if Rover.histAvgSpeed < 0.01 and Rover.histAvgSpeedErr == 0:
-      Rover.mode = 'rotate_left'
+      Rover.mode = 'rotate_right'
       print('ROTATE LEFT! you are stuck')
       return Rover
 
@@ -177,7 +177,7 @@ def decision_step(Rover):
 
 
     if len(Rover.nav_angles) < 200:
-      Rover.mode = 'rotate_left'
+      Rover.mode = 'rotate_right'
       return Rover
 
 

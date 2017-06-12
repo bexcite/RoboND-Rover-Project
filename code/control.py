@@ -43,6 +43,9 @@ def set_steer(Rover, deltaYaw):
     sD = 0.3
     sI = 0.0
 
+    deltaYaw = normalize_angle(deltaYaw * 0.1 + Rover.prev_target_yaw * 0.9)
+    Rover.prev_target_yaw = deltaYaw
+
     targetSteer = deltaYaw
 
     s_cte = targetSteer
@@ -86,6 +89,16 @@ def control_step(Rover):
       print('MODE = rotate_left')
       return Rover
 
+    if Rover.mode == 'rotate_right':
+      if Rover.vel > 0.2:
+        send_stop(Rover)
+        return Rover
+      Rover.steer = -15
+      Rover.brake = 0
+      Rover.throttle = 0.0
+      print('MODE = rotate_right')
+      return Rover
+
     if Rover.near_sample and not Rover.picking_up:
       print('ROVER NEAR SAMPLE!')
       if Rover.vel > 0.01:
@@ -102,13 +115,14 @@ def control_step(Rover):
         Rover.brake = 0
         deltaYaw = np.mean(Rover.nav_angles * 180 / np.pi)
         deltaYaw_min = np.min(Rover.nav_angles * 180 / np.pi)
-        set_steer(Rover, normalize_angle(deltaYaw * 0.7 + deltaYaw_min * 0.3)) # -15
+        deltaYaw_max = np.max(Rover.nav_angles * 180 / np.pi)
+        set_steer(Rover, normalize_angle(deltaYaw * 0.8 + deltaYaw_max * 0.2)) # -15
         # Rover.steer = np.clip(deltaYaw-8, -15, 15)
         Rover.throttle = Rover.throttle_set
         print('MODE = follow_wall')
         return Rover
 
-
+    '''
     if Rover.targetPos is None:
 
       if Rover.mode == 'rotate':
@@ -133,6 +147,7 @@ def control_step(Rover):
 
       send_stop(Rover)
       return Rover
+    '''
 
     print('targetPos = ', Rover.targetPos)
 
@@ -142,8 +157,26 @@ def control_step(Rover):
     # targetDist = Rover.targetPos[1]
 
 
+    if Rover.mode == 'forward_stop':
+      if len(Rover.rock_angles) > 10:
+        deltaYaw = np.mean(Rover.rock_angles * 180 / np.pi)
+        set_steer(Rover, deltaYaw)
+        if np.absolute(deltaYaw) > 10 and Rover.vel > 0.1:
+          # Rover.brake = Rover.brake_set
+          # Rover.thottle = 0.0
+          print('deltaYaw is big and vel is 0.1 plus - so stop.')
+          send_stop(Rover)
+          return Rover
+        # k = 3
+        # coeff = np.exp(-(deltaYaw**2/(2*k*k)))
+        coeff = 1
+        if np.absolute(deltaYaw) < 10:
+          Rover.brake = 0.0
+          Rover.throttle = coeff * Rover.throttle_set
+        return Rover
 
 
+    '''
     targetYaw = np.arctan2((Rover.targetPos[1] - Rover.pos[1]), (Rover.targetPos[0] - Rover.pos[0]))
     # print('targetYaw deg = ', targetYaw)
     targetYaw = targetYaw * 180 / math.pi
@@ -265,6 +298,7 @@ def control_step(Rover):
     if Rover.near_sample and Rover.vel < 0.1 and not Rover.picking_up:
         print("D: PICK SAMPLE, near_sample = ", Rover.near_sample)
         Rover.send_pickup = True
+    '''
 
 
     return Rover

@@ -75,6 +75,7 @@ class History():
         d += self.hist[idx]["vel"] * (self.hist[idx]["dt"] - self.hist[idx+1]["dt"])
       t += self.hist[idx]["throttle"]
     print('d = ', d)
+    print('avg_throttle = ', t / len(self.hist))
     if t / len(self.hist) > 0.1:
       return d / (self.hist[0]["dt"] - self.hist[len(self.hist)-1]["dt"]), 0
     else:
@@ -216,6 +217,10 @@ def telemetry(sid, data):
 
 
             Rover = control_step(Rover)
+
+            # Fix thottle (bug)
+            if Rover.throttle < 0.01 and Rover.throttle > -0.01:
+              Rover.throttle = 0.0
 
 
             history.add(dt, Rover.vel, Rover.throttle, Rover.mode)
