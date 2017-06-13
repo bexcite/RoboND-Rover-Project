@@ -68,9 +68,11 @@ Additionally I've introduced `control_step` where a simple PD controller is impl
 
 There also was a lot of experiments in PD controller for throttle and it's combination with PD controller for steering that didn't worked well for stopping. Also I've thought initially that I can build planning and navigation mostly on map, but find a lot of problem with map inaccuracy for such planning and combination of map data with actual situational vision data. So I rolled back everything to the simplest wall following solution that works reasonable well.
 
-Hope in next part of the course we will have more chance to build a proper controller, planner and decision step that works much better together.
+Hope in following parts of the course we will have more chance to build a proper controller, planner and decision step that works much better together.
 
 
 ## By running `drive_rover.py` and launching the simulator in autonomous mode, your rover does a reasonably good job at mapping the environment.
 
-The result of running `drive_rover.py` in video below. 13-15 FPS during video recording, and around 22 FPS without. Simulator mode - 640x480, Fastest
+The result of running `drive_rover.py` in video below. 13-15 FPS during video recording, and around 22 FPS without. Simulator mode - 640x480, Fastest.
+
+[![Rover Driving and Mapping](https://img.youtube.com/vi/rDij00NB7pA/0.jpg)](https://www.youtube.com/watch?v=rDij00NB7pA)
