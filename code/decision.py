@@ -128,11 +128,6 @@ def decision_step(Rover):
     # Here you're all set up with some basic functionality but you'll need to
     # improve on this decision tree to do a good job of navigating autonomously!
 
-    # steer = np.mean(Rover.nav_angles * 180/np.pi)
-    # dists = np.mean(Rover.nav_dists)
-    # print('mean steer = ', steer)
-    # print('mean dists = ', dists)
-
     if Rover.mode == 'rotate':
       return Rover
 
@@ -151,7 +146,10 @@ def decision_step(Rover):
 
 
     # if we stuck
-    if Rover.histAvgSpeed < 0.01 and Rover.histAvgSpeedErr == 0:
+    avgSpeedLimit = 0.01
+    if Rover.mode == 'forward_stop':
+      avgSpeedLimit = 0.002
+    if Rover.histAvgSpeed < avgSpeedLimit and Rover.histAvgSpeedErr == 0:
       Rover.mode = 'rotate_right'
       print('ROTATE LEFT! you are stuck')
       return Rover
@@ -164,18 +162,6 @@ def decision_step(Rover):
 
 
 
-
-    # TODO: Select closest rock as target
-    '''
-    if len(rocks) > 0:
-      idx_min = get_closest_rock_idx(rocks, Rover.pos)
-      print('ROCK ON MAP! set targetPos to ', rocks[idx_min])
-      Rover.targetPos = rocks[idx_min]
-      Rover.mode = 'forward_stop'
-      return Rover
-    '''
-
-
     if len(Rover.nav_angles) < 200:
       Rover.mode = 'rotate_right'
       return Rover
@@ -184,7 +170,17 @@ def decision_step(Rover):
 
     Rover.mode = 'follow_wall'
 
+
+
     '''
+    if len(rocks) > 0:
+      idx_min = get_closest_rock_idx(rocks, Rover.pos)
+      print('ROCK ON MAP! set targetPos to ', rocks[idx_min])
+      Rover.targetPos = rocks[idx_min]
+      Rover.mode = 'forward_stop'
+      return Rover
+
+
     # Find the next target pos to explore
     print('dec targetPos =', Rover.targetPos)
     print('dec Rover.pos =', Rover.pos)
@@ -230,30 +226,6 @@ def decision_step(Rover):
     #     print("MODE = no_target")
     '''
 
-
-
-    # Plan the route and select the next point
-
-
-    # targetX = 93.3 # Rover.pos[0] + 10
-    # targetY = 78.4 # Rover.pos[1] + 10
-
-    # targetX = 97
-    # targetY = 73
-
-
-    # targetX = np.random.choice([107, 106])
-    # targetY = 66
-
-    # targetYaw = 90
-
-    # print('deltaYaw = ', deltaYaw)
-
-    # Rover.targetYaw = targetYaw
-    # Rover.targetPos = (targetX, targetY)
-    # Rover.mode = 'forward_stop'
-    # Rover.mode = 'forward_stop'
-    # Rover.mode = 'forward_pickup'
 
     return Rover
 

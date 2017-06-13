@@ -39,11 +39,11 @@ def get_target_vel(Rover, s_cte):
     return targetVel
 
 def set_steer(Rover, deltaYaw):
-    sP = 0.5
-    sD = 0.3
+    sP = 0.5 # 0.5
+    sD = 0.35 # 0.35
     sI = 0.0
 
-    deltaYaw = normalize_angle(deltaYaw * 0.1 + Rover.prev_target_yaw * 0.9)
+    deltaYaw = normalize_angle(deltaYaw * 0.3 + Rover.prev_target_yaw * 0.7)
     Rover.prev_target_yaw = deltaYaw
 
     targetSteer = deltaYaw
@@ -75,9 +75,9 @@ def control_step(Rover):
     # sD = 0.12
     # sI = 0.0
 
-    sP = 0.1
-    sD = 0.05
-    sI = 0.0
+    # sP = 0.1
+    # sD = 0.05
+    # sI = 0.0
 
     if Rover.mode == 'rotate_left':
       if Rover.vel > 0.2:
@@ -122,6 +122,35 @@ def control_step(Rover):
         print('MODE = follow_wall')
         return Rover
 
+
+    print('targetPos = ', Rover.targetPos)
+
+    # ALways release brakes if they were set
+    Rover.brake = 0
+
+    # targetDist = Rover.targetPos[1]
+
+
+    if Rover.mode == 'forward_stop':
+      if len(Rover.rock_angles) > 10:
+        deltaYaw = np.mean(Rover.rock_angles * 180 / np.pi)
+        set_steer(Rover, deltaYaw)
+        if np.absolute(deltaYaw) > 10 and Rover.vel > 0.1:
+          # Rover.brake = Rover.brake_set
+          # Rover.thottle = 0.0
+          print('deltaYaw is big and vel is 0.1 plus - so stop.')
+          send_stop(Rover)
+          return Rover
+        # k = 3
+        # coeff = np.exp(-(deltaYaw**2/(2*k*k)))
+        coeff = 1
+        if np.absolute(deltaYaw) < 10:
+          Rover.brake = 0.0
+          Rover.throttle = coeff * Rover.throttle_set
+        return Rover
+
+
+
     '''
     if Rover.targetPos is None:
 
@@ -149,31 +178,6 @@ def control_step(Rover):
       return Rover
     '''
 
-    print('targetPos = ', Rover.targetPos)
-
-    # ALways release brakes if they were set
-    Rover.brake = 0
-
-    # targetDist = Rover.targetPos[1]
-
-
-    if Rover.mode == 'forward_stop':
-      if len(Rover.rock_angles) > 10:
-        deltaYaw = np.mean(Rover.rock_angles * 180 / np.pi)
-        set_steer(Rover, deltaYaw)
-        if np.absolute(deltaYaw) > 10 and Rover.vel > 0.1:
-          # Rover.brake = Rover.brake_set
-          # Rover.thottle = 0.0
-          print('deltaYaw is big and vel is 0.1 plus - so stop.')
-          send_stop(Rover)
-          return Rover
-        # k = 3
-        # coeff = np.exp(-(deltaYaw**2/(2*k*k)))
-        coeff = 1
-        if np.absolute(deltaYaw) < 10:
-          Rover.brake = 0.0
-          Rover.throttle = coeff * Rover.throttle_set
-        return Rover
 
 
     '''

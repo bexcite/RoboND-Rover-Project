@@ -1,7 +1,7 @@
 import numpy as np
 import math
 
-
+# TODO: This is empty for now)
 def planning_step(Rover):
 
     if Rover.targetPos is None:
